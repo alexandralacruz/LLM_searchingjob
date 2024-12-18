@@ -28,23 +28,46 @@ class ChatAssistant:
         # TODO: Create a string template for the chat assistant. It must indicate the LLM
         # that a chat history is being provided and that a new question is being asked.
         # The template must have two input variables: `history` and `human_input`.
-        
-        
+        assistant_template = """
+        The following is a friendly conversation between a human and an AI-agent. 
+        The AI-agent is helpful, provides detailed information, and uses the chat history to maintain context.
+        If the AI-agent does not know the answer to a question, it truthfully says it does not know.
+
+        Chat history:
+        {history}
+
+        New question from the human:
+        {human_input}
+
+        AI-agent:
+        """
 
         # TODO: Create a prompt template using the string template created above.
         # Hint: Use the `langchain.prompts.PromptTemplate` class.
         # Hint: Don't forget to add the input variables: `history` and `human_input`.
-        self.prompt = 
+        self.prompt = PromptTemplate(
+            input_variables=["history", "human_input"],
+            template=assistant_template
+        )
 
         # TODO: Create an instance of `langchain.chat_models.ChatOpenAI` with the appropriate settings.
         # Remember some settings are being provided in the __init__ function for this class.
-        self.llm = 
+        self.llm = ChatOpenAI(
+            model=llm_model,
+            api_key=api_key,
+            temperature=temperature
+        )
 
         # TODO: Create an instance of `langchain.chains.LLMChain` with the appropriate settings.
         # This chain must combine our prompt, llm and also have a memory.
         # Hint: You can use the `langchain.memory.ConversationBufferWindowMemory` class with
         # `k=history_length``.
-        self.model = 
+        self.model = LLMChain(
+            prompt=self.prompt,
+            llm=self.llm,
+            memory=ConversationBufferWindowMemory(k=history_length),
+            verbose=settings.LANGCHAIN_VERBOSE 
+        )
 
     def predict(self, human_input: str) -> str:
         """

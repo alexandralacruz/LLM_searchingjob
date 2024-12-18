@@ -45,18 +45,39 @@ class JobsFinderAssistant:
         # that a chat history is being provided and that a new question is being asked
         # and also there are some articles found on a database for answering the question.
         # The template must have three input variables: `history`, `search_results` and `human_input`.
+        template = """
+        The following is a conversation between a user and an AI job assistant. The assistant retrieves job 
+        listings based on the user's resume and inputs.
         
+        Chat history:
+        {history}
+
+        Found articles:
+        {search_results}
+
+        New question from the user:
+        {human_input}
+
+        AI response:
+        """
     
 
         # TODO: Create a prompt template using the string template created above.
         # Hint: Use the `langchain.prompts.PromptTemplate` class.
         # Hint: Don't forget to add the input variables: `history` and `human_input`.
-        self.prompt =
+        self.prompt = PromptTemplate(
+            input_variables=["history", "search_results", "human_input"],
+            template=template
+        )
         
 
         # TODO: Create an instance of `langchain.chat_models.ChatOpenAI` with the appropriate settings.
         # Remember some settings are being provided in the __init__ function for this class.
-        self.llm = 
+        self.llm = ChatOpenAI(
+            api_key=api_key,
+            model_name=llm_model,
+            temperature=temperature
+        )
         
 
         # Create a memory for the chat assistant.
@@ -66,7 +87,11 @@ class JobsFinderAssistant:
 
         # TODO: Create an instance of `langchain.chains.LLMChain` with the appropriate settings.
         # This chain must combine our prompt, llm and also have a memory.
-        self.model = 
+        self.model = LLMChain(
+            prompt=self.prompt,
+            llm=self.llm,
+            memory=_memory
+        )
         
 
     def predict(self, human_input: str) -> str:
@@ -87,7 +112,7 @@ class JobsFinderAssistant:
         # TODO: Use the human input and the user resume summary to search for jobs.
         # Hint 1: Use the `self.retriever` instance.
         # Hint 2: You can combine the human input with the resume summary just concatenating strings.
-        
+        jobs = self.retriever.search(f"{self.resume_summary}. {human_input}")
 
         # Call the model to generate a response.
         # We will pass the original human_input on this step, the resume should
@@ -96,7 +121,7 @@ class JobsFinderAssistant:
             {"search_results": jobs, "human_input": human_input}
         )
 
-        return model_answer
+        return {"output": model_answer["text"]}
 
 
 if __name__ == "__main__":

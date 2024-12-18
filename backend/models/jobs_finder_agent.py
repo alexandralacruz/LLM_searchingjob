@@ -22,17 +22,43 @@ def build_cover_letter_writing(llm, resume):
         # that a resume and a job description is being provided, it must write a
         # cover letter for the job description using the applicant skills.
         # The template must have two input variables: `resume` and `job_description`.
+        assistant_template = """
+        I am an AI assistant tasked with writing a personalized cover letter.
+        Below is a resume and a job description.
         
+        Resume:
+        {resume}
+        
+        Job Description:
+        {job_description}
+        
+        Write a cover letter for the job description above, highlighting the relevant skills and experience from the resume.
+        The cover letter should be professional and tailored for the specific job.
+        """
 
         # TODO: Create a prompt template using the string template created above.
         # Hint: Use the `langchain.prompts.PromptTemplate` class.
         # Hint: Don't forget to add the input variables: `history` and `human_input`.
-        prompt = 
+        prompt = PromptTemplate(
+            input_variables=["resume", "job_description"],
+            template=assistant_template
+        )
+        
         
 
         # TODO: Create an instance of `langchain.chains.LLMChain` with the appropriate settings.
         # This chain must combine our prompt and an llm. It doesn't need a memory.
-        cover_letter_writing_chain = 
+        cover_letter_writing_chain = LLMChain(
+            llm=llm,
+            prompt=prompt
+        )
+        cover_letter = cover_letter_writing_chain.run({
+            "resume": resume,
+            "job_description": job_description
+        })
+
+        return cover_letter
+
 
     return cover_letter_writing
 
@@ -66,6 +92,7 @@ class JobsFinderAgent:
         )
 
         # Create the Job finder tool
+        print("====================== job_finder_assistant: before JobsFinderAssistant")
         self.job_finder = JobsFinderAssistant(
             resume=resume,
             llm_model=llm_model,
@@ -78,6 +105,7 @@ class JobsFinderAgent:
         self.history_length = history_length
 
     def create_agent(self):
+        print("====================== job_finder_assistant: create agent")
         job_finder = build_job_finder(self.job_finder)
         cover_letter_writing = build_cover_letter_writing(
             self.llm, self.resume
@@ -119,13 +147,15 @@ class JobsFinderAgent:
             {"input": human_input, "chat_memory": self.agent_memory}
         )
 
-        self.agent_memory.extend(
-            [
-                HumanMessage(content=human_input),
-                AIMessage(content=agent_reseponse["output"]),
-            ]
-        )
+        if "output" in agent_reseponse:
+            self.agent_memory.extend(
+                [
+                    HumanMessage(content=human_input),
+                    AIMessage(content=agent_reseponse["output"]),
+                ]
+            )
 
-        self.agent_memory = self.agent_memory[-self.history_length :]
-
-        return agent_reseponse
+            self.agent_memory = self.agent_memory[-self.history_length :]
+            return {"output": agent_reseponse["output"]}
+        else:
+            return "An error occurred: 'output' key not found in the agent's response."

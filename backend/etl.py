@@ -66,7 +66,12 @@ class ETLProcessor:
         # TODO: Create a text splitter using the
         # `langchain.text_splitter.RecursiveCharacterTextSplitter` class.
         # Hint: Use the `chunk_size` and `chunk_overlap` parameters.
-
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=chunk_size,       # Maximum size of each chunk
+            chunk_overlap=chunk_overlap,      # Amount of overlap between chunks
+            length_function=len, 
+            add_start_index=True
+        )
 
     def load_data(self) -> pd.DataFrame:
         """
@@ -79,12 +84,21 @@ class ETLProcessor:
         """
         # TODO: Load the dataset from the `dataset_path` using the
         # `pandas.read_csv()` function.
+        df = pd.read_csv(self.dataset_path)
+        
         # Keep only the following columns: "description", "Employment type",
         # "Seniority level", "company", "location", "post_url", "title".
-        # Discard the rest.
+        columns_to_keep = ["description", "Employment type", "Seniority level", 
+                        "company", "location", "post_url", "title"]
+        
+        df = df[columns_to_keep]
+        
         # Drop the entire row if any nan values are found on some of the
         # chosen columns.
+        df.dropna(subset=columns_to_keep, inplace=True)
         
+        return df
+            
 
     def create_documents(self, descriptions: pd.DataFrame) -> List[Document]:
         """

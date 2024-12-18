@@ -46,7 +46,10 @@ async def select_assistant_action(action):
             content=f"Finished parsing your resume, file content: {resume}"
         ).send()
 
+        print("========================== Before create the Jobs finderS")
+
         if action.value == "Jobs finder Assistant":
+            #import ipdb;ipdb.set_trace()
             model = JobsFinderAssistant(
                 resume=resume,
                 llm_model=settings.OPENAI_LLM_MODEL,
@@ -58,7 +61,7 @@ async def select_assistant_action(action):
                 llm_model=settings.OPENAI_LLM_MODEL,
                 api_key=settings.OPENAI_API_KEY,
             )
-
+        print("Selecting assitant")
         cl.user_session.set("model", model)
         await cl.Message("Now, what kind of jobs are looking for?").send()
 
